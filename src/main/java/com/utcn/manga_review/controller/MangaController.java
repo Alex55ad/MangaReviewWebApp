@@ -81,5 +81,16 @@ public class MangaController {
         }
     }
 
+    @GetMapping("/sortByTags")
+    public List<Manga> sortMangasByTags(@RequestParam List<String> tags) {
+        return mangaService.sortMangasByTags(tags);
+    }
+
+    @GetMapping("/sortByScore")
+    public List<Manga> sortMangasByScore() {
+        return mangaService.sortMangasByScore();
+    }
+
+
 }
 

@@ -66,5 +66,9 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
+    @PutMapping("/encryptPasswords")
+    public void encryptPasswords() {
+        userService.encryptExistingPasswords();
+    }
 
 }

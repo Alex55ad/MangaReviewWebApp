@@ -48,6 +48,9 @@ public class Manga {
     @Column(name = "reviews")
     private Long reviews;
 
+    @Column(name = "cover")
+    private String cover;
+
     public String getFormattedDate() {
         if (releaseDate == null) {
             return null; // or return an empty string "" if you prefer

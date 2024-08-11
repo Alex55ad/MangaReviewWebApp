@@ -80,4 +80,14 @@ public class RecommendationController {
         }
     }
 
+    @GetMapping("/getByUser")
+    public ResponseEntity<List<Recommendation>> getRecommendationsByUsername(@RequestParam String username) {
+        try {
+            List<Recommendation> recommendations = recommendationService.getRecommendationsByUsername(username);
+            return ResponseEntity.ok(recommendations);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }

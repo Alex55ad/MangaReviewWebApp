@@ -7,8 +7,10 @@ import com.utcn.manga_review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -78,5 +80,35 @@ public class MangaService {
         // Save the updated manga back to the repository
         return mangaRepository.save(manga);
     }
+
+    public List<Manga> sortMangasByTags(List<String> tags) {
+        List<Manga> mangas = (List<Manga>) mangaRepository.findAll();
+
+        return mangas.stream()
+                .filter(manga -> containsAllTags(manga.getTags(), tags))
+                .sorted(Comparator.comparingInt((Manga manga) ->
+                        countMatchingTags(manga.getTags(), tags)).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private boolean containsAllTags(String mangaTags, List<String> tags) {
+        List<String> mangaTagList = List.of(mangaTags.split(" "));
+        return tags.stream().allMatch(mangaTagList::contains);
+    }
+
+    private int countMatchingTags(String mangaTags, List<String> tags) {
+        List<String> mangaTagList = List.of(mangaTags.split(" "));
+        return (int) tags.stream()
+                .filter(mangaTagList::contains)
+                .count();
+    }
+
+    public List<Manga> sortMangasByScore() {
+        return mangaRepository.findAll()
+                .stream()
+                .sorted(Comparator.comparingDouble(Manga::getScore).reversed())
+                .collect(Collectors.toList());
+    }
+
 
 }

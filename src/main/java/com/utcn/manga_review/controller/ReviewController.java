@@ -71,4 +71,15 @@ public class ReviewController {
         }
     }
 
+    @GetMapping("/getByUsername")
+    public ResponseEntity<List<Review>> getReviewsByUsername(@RequestParam String username) {
+        try {
+            List<Review> reviews = reviewService.getReviewsByUsername(username);
+            return ResponseEntity.ok(reviews);
+        } catch (RuntimeException e) {
+            // Handle exceptions (e.g., user not found)
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }

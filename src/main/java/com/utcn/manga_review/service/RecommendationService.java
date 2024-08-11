@@ -60,6 +60,18 @@ public class RecommendationService {
         return recommendationRepository.findById(id).orElseThrow(() -> new RuntimeException("Recommendation not found"));
     }
 
+    public List<Recommendation> getRecommendationsByUsername(String username) {
+        // Fetch the user by username
+        Optional<User> optionalUser = userRepository.findByUsername(username);
+        if (optionalUser.isEmpty()) {
+            throw new RuntimeException("User not found with username: " + username);
+        }
+        User user = optionalUser.get();
+
+        // Fetch all recommendations for the found user
+        return recommendationRepository.findByUserId(user.getId());
+    }
+
     // Create and store a recommendation for a given user based on their most reviewed tag
     public Recommendation createRecommendation(Long userId) {
         Optional<User> optionalUser = userRepository.findById(userId);

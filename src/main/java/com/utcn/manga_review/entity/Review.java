@@ -3,6 +3,7 @@ package com.utcn.manga_review.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Entity
@@ -47,6 +48,14 @@ public class Review {
 
     @Column(name = "chapter")
     private Integer chapter;
+
+    public String getFormattedDate() {
+        if (date == null) {
+            return null; // or return an empty string "" if you prefer
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        return sdf.format(date);
+    }
 
 }
 

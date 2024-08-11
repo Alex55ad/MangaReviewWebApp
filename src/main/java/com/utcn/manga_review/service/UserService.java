@@ -63,6 +63,8 @@ public class UserService {
         }
         String hashedPassword = hashPassword(user.getPassword());
         user.setPassword(hashedPassword);
+        user.setType(UserType.MEMBER);
+        user.setAvgScore(0.00);
         return this.userRepository.save(user);
     }
 
