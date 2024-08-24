@@ -77,4 +77,19 @@ public class ReviewService {
     public Review getReviewById(Long id) {
         return reviewRepository.findById(id).orElseThrow(() -> new RuntimeException("Review not found"));
     }
+
+    public Optional<Review> getReviewByMangaIdAndUsername(Long mangaId, String username) {
+        // Find the user by username
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if (userOptional.isEmpty()) {
+            throw new RuntimeException("User not found with username: " + username);
+        }
+
+        // Retrieve the user's ID
+        Long userId = userOptional.get().getId();
+
+        // Find the review by mangaId and userId
+        return reviewRepository.findByMangaIdAndUserId(mangaId, userId);
+    }
+
 }

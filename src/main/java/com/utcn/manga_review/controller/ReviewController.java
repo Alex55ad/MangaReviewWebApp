@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequestMapping("/reviews")
 @RestController
@@ -80,6 +81,15 @@ public class ReviewController {
             // Handle exceptions (e.g., user not found)
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/getByMangaIdAndUsername")
+    public ResponseEntity<Review> getReviewByMangaIdAndUsername(@RequestParam Long mangaId, @RequestParam String username) {
+        Optional<Review> reviewOptional = reviewService.getReviewByMangaIdAndUsername(mangaId, username);
+
+        return reviewOptional
+                .map(ResponseEntity::ok) // Return 200 OK with the review if found
+                .orElseGet(() -> ResponseEntity.notFound().build()); // Return 404 Not Found if the review doesn't exist
     }
 
 }

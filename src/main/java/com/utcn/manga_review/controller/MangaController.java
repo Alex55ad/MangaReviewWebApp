@@ -1,6 +1,7 @@
 package com.utcn.manga_review.controller;
 
 import com.utcn.manga_review.entity.Manga;
+import com.utcn.manga_review.entity.MangaStatus;
 import com.utcn.manga_review.service.MangaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -91,6 +92,26 @@ public class MangaController {
         return mangaService.sortMangasByScore();
     }
 
+    @GetMapping("/findByTitle")
+    public ResponseEntity<Manga> findMangaByTitle(@RequestParam String title) {
+        try {
+            Manga manga = mangaService.findMangaByTitle(title);
+            return ResponseEntity.ok(manga);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/findByStatus")
+    public List<Manga> findMangasByStatus(@RequestParam MangaStatus status) {
+        return mangaService.findMangasByStatus(status);
+    }
+
+    @GetMapping("/uniqueTags")
+    public ResponseEntity<List<String>> getAllUniqueTags() {
+        List<String> uniqueTags = mangaService.getAllUniqueTags();
+        return ResponseEntity.ok(uniqueTags);
+    }
 
 }
 

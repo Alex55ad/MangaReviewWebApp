@@ -71,4 +71,14 @@ public class UserController {
         userService.encryptExistingPasswords();
     }
 
+    @GetMapping("/getById")
+    public ResponseEntity<User> getReviewById(@RequestParam Long id) {
+        try {
+            User user = userService.getUserById(id);
+            return ResponseEntity.ok(user);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }

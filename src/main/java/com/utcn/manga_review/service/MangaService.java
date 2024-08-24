@@ -1,15 +1,14 @@
 package com.utcn.manga_review.service;
 
 import com.utcn.manga_review.entity.Manga;
+import com.utcn.manga_review.entity.MangaStatus;
 import com.utcn.manga_review.entity.Review;
 import com.utcn.manga_review.repository.MangaRepository;
 import com.utcn.manga_review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -110,5 +109,32 @@ public class MangaService {
                 .collect(Collectors.toList());
     }
 
+    public List<Manga> findMangasByStatus(MangaStatus status) {
+        return mangaRepository.findByStatus(status);
+    }
 
+    public Manga findMangaByTitle(String title) {
+        return mangaRepository.findByTitle(title);
+    }
+
+    public List<String> getAllUniqueTags() {
+        // Retrieve all Manga entities from the repository
+        List<Manga> mangas = retrieveMangas();
+
+        // Create a set to hold unique tags
+        Set<String> uniqueTags = new HashSet<>();
+
+        // Iterate over each Manga and extract tags
+        for (Manga manga : mangas) {
+            // Split tags by space and add them to the set
+            String[] tags = manga.getTags().split(" ");
+            for (String tag : tags) {
+                uniqueTags.add(tag);
+            }
+        }
+
+        // Convert the set of unique tags to a list and return it
+        return uniqueTags.stream().collect(Collectors.toList());
+    }
 }
+
