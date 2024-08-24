@@ -76,11 +76,7 @@ class _HeaderMenuState extends State<HeaderMenu> {
               ),
               TextButton(
                 onPressed: () => Navigator.pushNamed(context, '/Reviews'),
-                child: Text('My Reviews', style: TextStyle(color: Colors.white)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/Recommendations'),
-                child: Text('Recommendations', style: TextStyle(color: Colors.white)),
+                child: Text('My List', style: TextStyle(color: Colors.white)),
               ),
               if (isModerator)
                 TextButton(

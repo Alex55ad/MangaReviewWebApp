@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 
 import 'package:mangareview_webapp/Login.dart';
+import 'package:mangareview_webapp/mangas.dart';
 import 'package:mangareview_webapp/reviews.dart';
 import 'package:mangareview_webapp/users.dart';
 import 'package:mangareview_webapp/Signup.dart';
@@ -44,6 +45,7 @@ class _MyAppState extends State<MyApp> {
         '/Signup': (context) => SignupPage(),
         '/Users': (context) => UsersPage(),
         '/Reviews': (context) => ReviewsPage(),
+        '/Manga': (context) => MangasPage(),
         // Add other routes here if needed
       },
     );
