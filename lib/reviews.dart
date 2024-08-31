@@ -27,7 +27,8 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
   Future<void> _loadUserAndReviews() async {
     await _loadUser();
-    if (_username != null) {
+    if (_username != null && _id != null) {
+      await _updateUserAverageScore();  // Update user's average score
       await Future.wait([
         _loadReviews(),
         _loadRecommendations(), // Load recommendations as well
@@ -47,6 +48,28 @@ class _ReviewsPageState extends State<ReviewsPage> {
       setState(() {
         _username = user['username'];
         _id = user['id'];
+      });
+    }
+  }
+
+  Future<void> _updateUserAverageScore() async {
+    if (_id == null) {
+      return;
+    }
+
+    try {
+      final response = await http.put(
+        Uri.parse('http://localhost:8080/users/updateScore?userId=$_id'),
+      );
+      if (response.statusCode == 200) {
+        print('User average score updated successfully');
+      } else {
+        throw Exception('Failed to update user average score');
+      }
+    } catch (e) {
+      print('Error updating user average score: $e');
+      setState(() {
+        _error = 'Error updating user average score: $e';
       });
     }
   }
@@ -225,118 +248,117 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
       content = SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Reading Reviews Table
-            Text('Reading', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            DataTable(
-              columns: const [
-                DataColumn(label: Text('Cover')),
-                DataColumn(label: Text('Title')),
-                DataColumn(label: Text('Score')),
-                DataColumn(label: Text('Chapter')),
-                DataColumn(label: Text('Review Title')),
-                DataColumn(label: Text('Comments')),
-              ],
-              rows: readingReviews.map<DataRow>((review) {
-                final manga = review['manga'];
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      GestureDetector(
-                        onTap: () => _openReviewPopup(manga['id']),
-                        child: Image.asset(manga['cover'], width: 50, height: 50),
+            if (readingReviews.isNotEmpty) ...[
+              Text('Reading', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              DataTable(
+                columns: const [
+                  DataColumn(label: Text('')),
+                  DataColumn(label: Text('Title')),
+                  DataColumn(label: Text('Score')),
+                  DataColumn(label: Text('Chapter')),
+                  DataColumn(label: Text('Review Title')),
+                ],
+                rows: readingReviews.map<DataRow>((review) {
+                  final manga = review['manga'];
+                  return DataRow(
+                    cells: [
+                      DataCell(
+                        GestureDetector(
+                          onTap: () => _openReviewPopup(manga['id']),
+                          child: Image.asset(manga['cover'], width: 50, height: 50),
+                        ),
                       ),
-                    ),
-                    DataCell(Text(manga['title'])),
-                    DataCell(Text(review['score'].toString())),
-                    DataCell(Text(review['chapter'].toString())),
-                    DataCell(Text(review['title'])),
-                    DataCell(Text(review['body'])),
-                  ],
-                );
-              }).toList(),
-            ),
-            SizedBox(height: 20),
+                      DataCell(Text(manga['title'])),
+                      DataCell(Text(review['score'].toString())),
+                      DataCell(Text(review['chapter'].toString())),
+                      DataCell(Text(review['title'])),
+                    ],
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: 20),
+            ],
 
-            // Completed Reviews Table
-            Text('Completed', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            DataTable(
-              columns: const [
-                DataColumn(label: Text('Cover')),
-                DataColumn(label: Text('Title')),
-                DataColumn(label: Text('Score')),
-                DataColumn(label: Text('Chapter')),
-                DataColumn(label: Text('Review Title')),
-                DataColumn(label: Text('Comments')),
-              ],
-              rows: completedReviews.map<DataRow>((review) {
-                final manga = review['manga'];
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      GestureDetector(
-                        onTap: () => _openReviewPopup(manga['id']),
-                        child: Image.asset(manga['cover'], width: 50, height: 50),
+            if (completedReviews.isNotEmpty) ...[
+              Text('Completed', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              DataTable(
+                columns: const [
+                  DataColumn(label: Text('')),
+                  DataColumn(label: Text('Title')),
+                  DataColumn(label: Text('Score')),
+                  DataColumn(label: Text('Chapter')),
+                  DataColumn(label: Text('Review Title')),
+                ],
+                rows: completedReviews.map<DataRow>((review) {
+                  final manga = review['manga'];
+                  return DataRow(
+                    cells: [
+                      DataCell(
+                        GestureDetector(
+                          onTap: () => _openReviewPopup(manga['id']),
+                          child: Image.asset(manga['cover'], width: 50, height: 50),
+                        ),
                       ),
-                    ),
-                    DataCell(Text(manga['title'])),
-                    DataCell(Text(review['score'].toString())),
-                    DataCell(Text(review['chapter'].toString())),
-                    DataCell(Text(review['title'])),
-                    DataCell(Text(review['body'])),
-                  ],
-                );
-              }).toList(),
-            ),
-            SizedBox(height: 20),
+                      DataCell(Text(manga['title'])),
+                      DataCell(Text(review['score'].toString())),
+                      DataCell(Text(review['chapter'].toString())),
+                      DataCell(Text(review['title'])),
+                    ],
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: 20),
+            ],
 
-            // Recommended Manga Table
-            Text('Recommendations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _createRecommendation,
-                  child: Text('Create Recommendation'),
-                ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: _recommendRandomManga,
-                  child: Text('Recommend Random Manga'),
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-            DataTable(
-              columns: const [
-                DataColumn(label: Text('Cover')),
-                DataColumn(label: Text('Title')),
-                DataColumn(label: Text('Reason')),
-                DataColumn(label: Text('Actions')),
-              ],
-              rows: _recommendations.map<DataRow>((recommendation) {
-                final manga = recommendation['manga'];
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      GestureDetector(
-                        onTap: () => _openReviewPopup(manga['id']),
-                        child: Image.asset(manga['cover'], width: 50, height: 50),
+            if (_recommendations.isNotEmpty) ...[
+              Text('Recommendations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  ElevatedButton(
+                    onPressed: _createRecommendation,
+                    child: Text('Create Recommendation'),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: _recommendRandomManga,
+                    child: Text('Recommend Random Manga'),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              DataTable(
+                columns: const [
+                  DataColumn(label: Text('')),
+                  DataColumn(label: Text('Title')),
+                  DataColumn(label: Text('Reason')),
+                  DataColumn(label: Text('Actions')),
+                ],
+                rows: _recommendations.map<DataRow>((recommendation) {
+                  final manga = recommendation['manga'];
+                  return DataRow(
+                    cells: [
+                      DataCell(
+                        GestureDetector(
+                          onTap: () => _openReviewPopup(manga['id']),
+                          child: Image.asset(manga['cover'], width: 50, height: 50),
+                        ),
                       ),
-                    ),
-                    DataCell(Text(manga['title'])),
-                    DataCell(Text(recommendation['reason'] ?? '')),
-                    DataCell(
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () => _deleteRecommendation(recommendation['id']),
+                      DataCell(Text(manga['title'])),
+                      DataCell(Text(recommendation['reason'] ?? '')),
+                      DataCell(
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () => _deleteRecommendation(recommendation['id']),
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ],
           ],
         ),
       );
@@ -352,4 +374,3 @@ class _ReviewsPageState extends State<ReviewsPage> {
     );
   }
 }
-

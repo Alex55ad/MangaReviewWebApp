@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 
+import 'package:mangareview_webapp/MangaCreationPopup.dart';
+
 class HeaderMenu extends StatefulWidget {
   final ValueChanged<bool> onThemeChanged;
 
@@ -49,9 +51,20 @@ class _HeaderMenuState extends State<HeaderMenu> {
     });
   }
 
+  void _openMangaPopup() async {
+    bool? result = await showDialog(
+      context: context,
+      builder: (context) => MangaPopup(mangaId: -1), // Pass -1 for new manga
+    );
+
+    if (result == true) {
+      // Handle successful result if needed
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isModerator = _userType == 'ADMIN';
+    final bool isAdmin = _userType == 'ADMIN';
 
     return Container(
       color: Color.fromARGB(200, 3, 54, 117),
@@ -78,10 +91,15 @@ class _HeaderMenuState extends State<HeaderMenu> {
                 onPressed: () => Navigator.pushNamed(context, '/Reviews'),
                 child: Text('My List', style: TextStyle(color: Colors.white)),
               ),
-              if (isModerator)
+              if (isAdmin)
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/Users'),
                   child: Text('Users', style: TextStyle(color: Colors.white)),
+                ),
+              if (isAdmin)
+                TextButton(
+                  onPressed: _openMangaPopup,
+                  child: Text('Add Manga', style: TextStyle(color: Colors.white)),
                 ),
             ],
           ),

@@ -1,9 +1,11 @@
+import 'dart:async';  // Import Timer class
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';  // Add this import
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mangareview_webapp/HeaderMenu.dart';
-import 'ReviewPopup.dart'; // Import the ReviewPopup class
+import 'ReviewPopup.dart';
+import 'MangaCreationPopup.dart';  // Import MangaPopup
 
 class Manga {
   final int id;
@@ -39,7 +41,11 @@ class _MangasPageState extends State<MangasPage> {
   String? _selectedStatus;
   String? _loggedInUsername;
   late int _userId;
+  bool _adminMode = false;  // Initialize Admin Mode to false
+  bool _isAdmin = false;    // Flag to track if the user is an admin
   final FlutterSecureStorage _storage = FlutterSecureStorage();  // Create a storage instance
+
+  Timer? _updateTimer; // Timer for periodic updates
 
   @override
   void initState() {
@@ -47,6 +53,13 @@ class _MangasPageState extends State<MangasPage> {
     _loadUser();  // Load the user when the widget initializes
     _loadMangas();
     _loadTags();
+    _startPeriodicUpdates();  // Start periodic updates
+  }
+
+  @override
+  void dispose() {
+    _updateTimer?.cancel(); // Cancel the timer when the widget is disposed
+    super.dispose();
   }
 
   Future<void> _loadUser() async {
@@ -56,6 +69,7 @@ class _MangasPageState extends State<MangasPage> {
       setState(() {
         _loggedInUsername = user['username'];  // Set the username in the state
         _userId = user['id'];
+        _isAdmin = user['type'] == 'ADMIN';  // Check if user is an admin
       });
     }
   }
@@ -98,7 +112,7 @@ class _MangasPageState extends State<MangasPage> {
     }
   }
 
-  Future<void> _openReviewPopup(int mangaId) async {
+  Future<void> _openPopup(int mangaId) async {
     if (_loggedInUsername == null) {
       // Handle case where the user is not logged in
       ScaffoldMessenger.of(context).showSnackBar(
@@ -107,42 +121,53 @@ class _MangasPageState extends State<MangasPage> {
       return;
     }
 
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'http://localhost:8080/reviews/getByMangaIdAndUsername?mangaId=$mangaId&username=$_loggedInUsername',
-        ),
+    if (_adminMode) {
+      // Open MangaPopup if in admin mode
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return MangaPopup(mangaId: mangaId);
+        },
       );
-
-      if (response.statusCode == 200) {
-        // Parse the review from the response body
-        var review = json.decode(response.body);
-        int reviewId = review['id'];
-
-        // Show the review popup with the found review
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return ReviewPopup(mangaId: mangaId, reviewId: reviewId, userId: _userId);
-          },
+    } else {
+      // Open ReviewPopup if not in admin mode
+      try {
+        final response = await http.get(
+          Uri.parse(
+            'http://localhost:8080/reviews/getByMangaIdAndUsername?mangaId=$mangaId&username=$_loggedInUsername',
+          ),
         );
-      } else if (response.statusCode == 404) {
-        // No review found for the specific manga and user
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return ReviewPopup(mangaId: mangaId, reviewId: -1, userId: _userId); // No review exists
-          },
+
+        if (response.statusCode == 200) {
+          // Parse the review from the response body
+          var review = json.decode(response.body);
+          int reviewId = review['id'];
+
+          // Show the review popup with the found review
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return ReviewPopup(mangaId: mangaId, reviewId: reviewId, userId: _userId);
+            },
+          );
+        } else if (response.statusCode == 404) {
+          // No review found for the specific manga and user
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return ReviewPopup(mangaId: mangaId, reviewId: -1, userId: _userId); // No review exists
+            },
+          );
+        } else {
+          throw Exception('Failed to load review');
+        }
+      } catch (e) {
+        print('Error: $e');
+        // Handle error, e.g., show a snackbar or dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to open review popup: $e')),
         );
-      } else {
-        throw Exception('Failed to load review');
       }
-    } catch (e) {
-      print('Error: $e');
-      // Handle error, e.g., show a snackbar or dialog
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to open review popup: $e')),
-      );
     }
   }
 
@@ -195,7 +220,7 @@ class _MangasPageState extends State<MangasPage> {
   }
 
   void _filterStatus(String? status) async {
-    if (status == 'Any' || status == null) {
+    if (status == 'ANY' || status == null) {
       _loadMangas();
       return;
     }
@@ -215,6 +240,42 @@ class _MangasPageState extends State<MangasPage> {
       setState(() {
         _error = e.toString();
       });
+    }
+  }
+
+  // Method to start periodic updates for scores and reviews
+  void _startPeriodicUpdates() {
+    _updateTimer = Timer.periodic(Duration(minutes: 1), (Timer timer) async {
+      await _updateAllMangaScores();
+      await _updateAllMangaReviewCounts();
+    });
+  }
+
+  // Method to update all manga scores
+  Future<void> _updateAllMangaScores() async {
+    try {
+      final response = await http.put(Uri.parse('http://localhost:8080/mangas/updateAllScores'));
+      if (response.statusCode == 200) {
+        print('Scores updated successfully');
+      } else {
+        throw Exception('Failed to update scores');
+      }
+    } catch (e) {
+      print('Error updating scores: $e');
+    }
+  }
+
+  // Method to update all manga review counts
+  Future<void> _updateAllMangaReviewCounts() async {
+    try {
+      final response = await http.put(Uri.parse('http://localhost:8080/mangas/updateAllReviews'));
+      if (response.statusCode == 200) {
+        print('Review counts updated successfully');
+      } else {
+        throw Exception('Failed to update review counts');
+      }
+    } catch (e) {
+      print('Error updating review counts: $e');
     }
   }
 
@@ -238,7 +299,7 @@ class _MangasPageState extends State<MangasPage> {
         itemBuilder: (context, index) {
           final manga = _mangas[index];
           return InkWell( // Use InkWell to detect taps on the cover
-            onTap: () => _openReviewPopup(manga.id), // Open the review popup
+            onTap: () => _openPopup(manga.id), // Open the appropriate popup
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -283,8 +344,7 @@ class _MangasPageState extends State<MangasPage> {
     return Scaffold(
       body: Column(
         children: [
-          HeaderMenu(onThemeChanged: (bool isDarkMode) {
-          }),
+          HeaderMenu(onThemeChanged: (bool isDarkMode) {}),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -339,10 +399,10 @@ class _MangasPageState extends State<MangasPage> {
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
-                    items: ['Any', 'Ongoing', 'Completed']
+                    items: ['Any', 'Ongoing', 'Finished']
                         .map((status) => DropdownMenuItem<String>(
                       child: Text(status),
-                      value: status,
+                      value: status.toUpperCase(),
                     ))
                         .toList(),
                     onChanged: (value) {
@@ -353,6 +413,16 @@ class _MangasPageState extends State<MangasPage> {
                     },
                   ),
                 ),
+                // Show the Admin Mode button only if the user is an admin
+                if (_isAdmin)
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _adminMode = !_adminMode;  // Toggle admin mode
+                      });
+                    },
+                    child: Text(_adminMode ? 'Exit Admin Mode' : 'Admin Mode'),
+                  ),
               ],
             ),
           ),
