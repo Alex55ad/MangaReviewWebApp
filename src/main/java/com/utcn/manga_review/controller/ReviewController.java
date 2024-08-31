@@ -92,4 +92,15 @@ public class ReviewController {
                 .orElseGet(() -> ResponseEntity.notFound().build()); // Return 404 Not Found if the review doesn't exist
     }
 
+    @GetMapping("/getAllSortedByDate")
+    public ResponseEntity<List<Review>> getAllReviewsSortedByDate() {
+        List<Review> reviews = reviewService.getReviewsSortedByDate();
+        if (reviews.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.ok(reviews);
+        }
+    }
+
+
 }

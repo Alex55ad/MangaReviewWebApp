@@ -81,8 +81,7 @@ public class MangaService {
     }
 
     public List<Manga> sortMangasByTags(List<String> tags) {
-        List<Manga> mangas = (List<Manga>) mangaRepository.findAll();
-
+        List<Manga> mangas = sortMangasByScore();
         return mangas.stream()
                 .filter(manga -> containsAllTags(manga.getTags(), tags))
                 .sorted(Comparator.comparingInt((Manga manga) ->
@@ -110,7 +109,10 @@ public class MangaService {
     }
 
     public List<Manga> findMangasByStatus(MangaStatus status) {
-        return mangaRepository.findByStatus(status);
+        return mangaRepository.findByStatus(status)
+                .stream()
+                .sorted(Comparator.comparingDouble(Manga::getScore).reversed())
+                .collect(Collectors.toList());
     }
 
     public Manga findMangaByTitle(String title) {
@@ -136,5 +138,20 @@ public class MangaService {
         // Convert the set of unique tags to a list and return it
         return uniqueTags.stream().collect(Collectors.toList());
     }
+
+    public void updateAllMangaScores() {
+        List<Manga> allMangas = retrieveMangas();
+        for (Manga manga : allMangas) {
+            updateMangaScore(manga.getId());
+        }
+    }
+
+    public void updateAllMangaReviewCounts() {
+        List<Manga> allMangas = retrieveMangas();
+        for (Manga manga : allMangas) {
+            updateReviewCount(manga.getId());
+        }
+    }
+
 }
 

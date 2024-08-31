@@ -92,4 +92,14 @@ public class ReviewService {
         return reviewRepository.findByMangaIdAndUserId(mangaId, userId);
     }
 
+    public List<Review> getReviewsSortedByDate() {
+        // Retrieve all reviews from the repository
+        List<Review> reviews = (List<Review>) reviewRepository.findAll();
+
+        // Sort the reviews by date from most recent to oldest
+        reviews.sort(Comparator.comparing(Review::getDate).reversed());
+
+        return reviews;
+    }
+
 }

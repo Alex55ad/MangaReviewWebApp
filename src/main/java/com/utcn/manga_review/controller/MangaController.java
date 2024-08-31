@@ -113,5 +113,25 @@ public class MangaController {
         return ResponseEntity.ok(uniqueTags);
     }
 
+    @PutMapping("/updateAllScores")
+    public ResponseEntity<Void> updateAllMangaScores() {
+        try {
+            mangaService.updateAllMangaScores();
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null); // Customize error handling as needed
+        }
+    }
+
+    @PutMapping("/updateAllReviews")
+    public ResponseEntity<Void> updateAllMangaReviewCounts() {
+        try {
+            mangaService.updateAllMangaReviewCounts();
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null); // Customize error handling as needed
+        }
+    }
+
 }
 
